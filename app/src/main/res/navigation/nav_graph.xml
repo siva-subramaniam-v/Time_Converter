@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/militaryTimeFragment">
+
+    <fragment
+        android:id="@+id/militaryTimeFragment"
+        android:name="com.example.timeconverter.ui.fragments.MilitaryTimeFragment"
+        android:label="MilitaryTimeFragment" >
+        <action
+            android:id="@+id/action_militaryTimeFragment_to_relativeTimeFragment"
+            app:destination="@id/relativeTimeFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/relativeTimeFragment"
+        android:name="com.example.timeconverter.ui.fragments.RelativeTimeFragment"
+        android:label="RelativeTimeFragment" />
+</navigation>
