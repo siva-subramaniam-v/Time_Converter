@@ -43,18 +43,14 @@ class MilitaryTimeFragment: Fragment() {
         val timeSplit = inputTime.split(":")
         val meridian = timeSplit[2].substring(2)
 
-        return if (meridian == "AM") {
-            if (timeSplit[0] == "12") {
-                "00:${timeSplit[1]}:${timeSplit[2].subSequence(0,2)}"
-            } else {
-                "${timeSplit[0]}:${timeSplit[1]}:${timeSplit[2].subSequence(0,2)}"
-            }
+        val normalTime = "${timeSplit[1]}:${timeSplit[2].subSequence(0,2)}"
+
+        val hour = if (meridian == "AM" ) {
+            if (timeSplit[0] == "12") "00" else timeSplit[0]
         } else {
-            if (timeSplit[0] == "12") {
-                "12:${timeSplit[1]}:${timeSplit[2].subSequence(0,2)}"
-            } else {
-                "${timeSplit[0].toInt() + 12}:${timeSplit[1]}:${timeSplit[2].subSequence(0,2)}"
-            }
+            if (timeSplit[0] != "12") "${timeSplit[0].toInt()+12}" else "12"
         }
+
+        return "$hour:$normalTime"
     }
 }

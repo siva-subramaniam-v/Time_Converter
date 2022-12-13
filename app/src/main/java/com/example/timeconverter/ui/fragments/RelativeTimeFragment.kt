@@ -13,14 +13,12 @@ import com.example.timeconverter.ui.viewmodels.RelativeTimeViewModel
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
 
 class RelativeTimeFragment : Fragment() {
     private lateinit var binding: FragmentRelativeTimeBinding
     private lateinit var relativeTimeViewModel: RelativeTimeViewModel
-    private lateinit var resultString: String
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -41,7 +39,7 @@ class RelativeTimeFragment : Fragment() {
 
     private fun convertToRelativeTime() {
         relativeTimeViewModel.apply {
-            if (pickedDateMillis == -1L) {
+            if (pickedDate == "") {
                 Toast.makeText(requireContext(), "Please pick a date", Toast.LENGTH_SHORT).show()
                 return
             }
@@ -51,86 +49,89 @@ class RelativeTimeFragment : Fragment() {
                 return
             }
 
-            val totalTimeMillis = timeToMillis(pickedHours, pickedMinutes, 0)
-            val sdf = SimpleDateFormat("HH:mm:ss")
+            val pickedDateSplit = pickedDate.split("/").map { it.toInt() }
 
-            val currentTime = sdf.format(Date()) ?: "00:00:00"
-            val timeSplit = currentTime.split(":")
+            val todayInMillis = Calendar.getInstance().timeInMillis
+            val pickedDateInMillis = Calendar.getInstance().also {
+                it.set(pickedDateSplit[2], pickedDateSplit[1]-1, pickedDateSplit[0], pickedHours, pickedMinutes)
+            }.timeInMillis
 
-            val currentTimeMillis =
-                timeToMillis(timeSplit[0].toInt(), timeSplit[1].toInt(), timeSplit[2].toInt())
-            val timeDiffMillis = currentTimeMillis - totalTimeMillis
+            val todayInSecs = todayInMillis/1000
+            val pickedDateInSeconds = pickedDateInMillis/1000
 
-            val totalSecsDiff = timeDiffMillis / 1000
-            val totalMinutesDiff = totalSecsDiff / 60
-            val totalHoursDiff = totalMinutesDiff / 60
-
-            Toast.makeText(requireContext(), currentTime, Toast.LENGTH_LONG).show()
-
-            //binding.timeInputTv.text = "${(timeDiffMillis/1000) / 60} minutes"
-
-            val dateDiff = pickedDate.split("/")
-
-            val sdfDate = SimpleDateFormat("dd/MM/yyyy")
-            val currentDate = sdfDate.format(Date()) ?: "00/00/00"
-            val dateSplit = currentDate.split("/")
-
-            val totalYearsDiff = dateSplit[2].toInt() - dateDiff[2].toInt()
-            if (totalYearsDiff < 0) {
-                resultString = "${abs(totalYearsDiff)} years in future"
-                binding.relativeTimeTv.text = resultString
+            val secondsDiff = todayInSecs - pickedDateInSeconds
+            if (secondsDiff in 1..59) {
+                setResult("$secondsDiff seconds ago")
+                return
+            }
+            if (secondsDiff in -1L downTo -59L) {
+                setResult("${abs(secondsDiff)} seconds in future")
                 return
             }
 
-            val totalMonthsDiff = dateSplit[1].toInt() - dateDiff[1].toInt()
-            if (totalMonthsDiff < 0) {
-                resultString = "${abs(totalMonthsDiff)} months in future"
-                binding.relativeTimeTv.text = resultString
+            val minutesDiff = secondsDiff/60
+
+            if (minutesDiff in 1..59) {
+                setResult("$minutesDiff minutes ago")
+                return
+            }
+            if (minutesDiff in -1L downTo -59L) {
+                setResult("${abs(minutesDiff)} minutes in future")
                 return
             }
 
-            val totalDaysDiff = dateSplit[0].toInt() - dateDiff[0].toInt()
-            if (totalDaysDiff < 0) {
-                resultString = "${abs(totalDaysDiff)} days in future"
-                binding.relativeTimeTv.text = resultString
+            val hoursDiff = secondsDiff/3600
+            if (hoursDiff in 1..23) {
+                setResult("$hoursDiff hours ago")
+                return
+            }
+            if (hoursDiff in -1L downTo -23L) {
+                setResult("${abs(hoursDiff)} hours in future")
                 return
             }
 
-            if (totalMinutesDiff < 0) {
-                resultString = "${abs(totalMinutesDiff)} days in future"
-                binding.relativeTimeTv.text = resultString
+            val daysDiff = secondsDiff/(3600*24)
+            if (daysDiff in 7..29) {
+                setResult("${daysDiff / 7} weeks ago")
+                return
+            }
+            if (daysDiff in -7L downTo -29L) {
+                setResult("${abs(daysDiff / 7)} weeks in future")
+                return
+            }
+            if (daysDiff in 1..6) {
+                setResult("$daysDiff days ago")
+                return
+            }
+            if (daysDiff in -1L downTo -6L) {
+                setResult("${abs(daysDiff)} days in future")
                 return
             }
 
-            binding.apply {
-                if (totalYearsDiff > 0) {
-                    resultString = "$totalYearsDiff year(s) ago"
-                } else if (totalMonthsDiff > 0) {
-                    resultString = "$totalMonthsDiff month(s) ago"
-                } else if (totalDaysDiff >= 7) {
-                    resultString = "${totalDaysDiff / 7} week(s) ago"
-                } else if (totalDaysDiff > 0) {
-                    //Toast.makeText(requireContext(), "$totalDaysDiff", Toast.LENGTH_SHORT).show()
-                    resultString = "$totalDaysDiff day(s) ago"
-                } else if (totalHoursDiff > 0) {
-                    resultString = "$totalHoursDiff hour(s) ago"
-                } else if (totalMinutesDiff > 0) {
-                    resultString = "$totalMinutesDiff minute(s) ago"
-                } else if (totalSecsDiff > 0) {
-                    resultString = "$totalSecsDiff second(s) ago"
-                } else {
-                    resultString = "NULL string"
-                }
+            val monthsDiff = secondsDiff/(3600*24*30)
+            if (monthsDiff in 1..11) {
+                setResult("$monthsDiff months ago")
+                return
+            }
+            if (monthsDiff in -1L downTo -11L) {
+                setResult("${abs(monthsDiff)} months in future")
+                return
+            }
 
-                relativeTimeTv.text = resultString
+            val yearsDiff = secondsDiff/(3600*24*30*12)
+            if (yearsDiff > 0) {
+                setResult("$yearsDiff years ago")
+                return
+            }
+            if (yearsDiff < 0) {
+                setResult("${abs(yearsDiff)} years in future")
+                return
             }
         }
     }
 
-    private fun timeToMillis(hours: Int, minutes: Int, seconds: Int): Long {
-        val totalMinutes = (hours * 60) + minutes
-        val totalSecs = (totalMinutes * 60) + seconds
-        return (totalSecs * 1000).toLong()
+    private fun setResult(relativeTime: String) {
+        binding.relativeTimeTv.text = relativeTime
     }
 
     private fun showDatePickerDialog() {
@@ -142,7 +143,6 @@ class RelativeTimeFragment : Fragment() {
                 val date = DateFormat.format("dd/MM/yyyy", Date(it)).toString()
                 binding.dateInputTv.text = date
 
-                relativeTimeViewModel.pickedDateMillis = it
                 relativeTimeViewModel.pickedDate = date
             }
         }
